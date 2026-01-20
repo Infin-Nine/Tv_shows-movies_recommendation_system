@@ -2,63 +2,92 @@ import pickle
 import streamlit as st
 import requests
 
-def fetch_poster(movie_id):
-    url = "https://api.themoviedb.org/3/movie/{}?api_key=8265bd1679663a7ea12ac168da84d2e8&language=en-US".format(movie_id)
-    data = requests.get(url)
-    data = data.json()
+# -----------------------------
+# TMDB Poster Fetcher
+# -----------------------------
+API_KEY = "7fbd0c04887929e22abf085398a5e167"
+
+def fetch_poster(content_id, content_type):
+    if content_type == "Movie":
+        url = f"https://api.themoviedb.org/3/movie/{content_id}?api_key={API_KEY}&language=en-US"
+    else:
+        url = f"https://api.themoviedb.org/3/tv/{content_id}?api_key={API_KEY}&language=en-US"
+
+    data = requests.get(url).json()
     poster_path = data['poster_path']
-    full_path = "https://image.tmdb.org/t/p/w500/" + poster_path
-    return full_path
 
-def recommend(movie):
-    index = movies[movies['title'] == movie].index[0]
-    distances = sorted(list(enumerate(similarity[index])), reverse=True, key=lambda x: x[1])
-    recommended_movie_names = []
-    recommended_movie_posters = []
-    for i in distances[1:6]:
-        # fetch the movie poster
-        movie_id = movies.iloc[i[0]].id
-        recommended_movie_posters.append(fetch_poster(movie_id))
-        recommended_movie_names.append(movies.iloc[i[0]].title)
-
-    return recommended_movie_names,recommended_movie_posters
+    if poster_path:
+        return "https://image.tmdb.org/t/p/w500/" + poster_path
+    return None
 
 
+# -----------------------------
+# Generic Recommendation Logic
+# -----------------------------
+def recommend(title, data, similarity, content_type, n=10):
+    index = data[data['title'] == title].index[0]
+    distances = sorted(
+        list(enumerate(similarity[index])),
+        reverse=True,
+        key=lambda x: x[1]
+    )
 
-st.header('Movie Recommender System')
+    names = []
+    posters = []
 
-movies = pickle.load(open('D:\python\jupyter\movie_list.pkl','rb'))
-similarity = pickle.load(open('D:\python\jupyter\similarity.pkl','rb'))
+    for i in distances[1:n+1]:
+        content_id = data.iloc[i[0]].id
+        names.append(data.iloc[i[0]].title)
+        posters.append(fetch_poster(content_id, content_type))
+
+    return names, posters
 
 
+# -----------------------------
+# Load Data
+# -----------------------------
+movies = pickle.load(open("movie.pkl", "rb"))
+movie_similarity = pickle.load(open("movies_similarity.pkl", "rb"))
 
-movie_list = movies['title'].values
-selected_movie = st.selectbox(
-    "Type or select a movie from the dropdown",
-    movie_list
+tv_shows = pickle.load(open("series.pkl", "rb"))
+tv_similarity = pickle.load(open("series_similarity.pkl", "rb"))
+
+
+# -----------------------------
+# Streamlit UI
+# -----------------------------
+st.title("🎬 Movie & TV Show Recommendation System")
+
+choice = st.selectbox(
+    "What do you want recommendations for?",
+    ("Movies", "TV Shows")
 )
 
-if st.button('Show Recommendation'):
-    recommended_movie_names,recommended_movie_posters = recommend(selected_movie)
-    col1, col2, col3, col4, col5 = st.columns(5)
-    with col1:
-        st.text(recommended_movie_names[0])
-        st.image(recommended_movie_posters[0])
-    with col2:
-        st.text(recommended_movie_names[1])
-        st.image(recommended_movie_posters[1])
+if choice == "Movies":
+    selected = st.selectbox("Select a Movie", movies['title'].values)
 
-    with col3:
-        st.text(recommended_movie_names[2])
-        st.image(recommended_movie_posters[2])
-    with col4:
-        st.text(recommended_movie_names[3])
-        st.image(recommended_movie_posters[3])
-    with col5:
-        st.text(recommended_movie_names[4])
-        st.image(recommended_movie_posters[4])
+    if st.button("Recommend Movies"):
+        names, posters = recommend(
+            selected, movies, movie_similarity, "Movie", n=10
+        )
+
+        cols = st.columns(5)
+        for i in range(len(names)):
+            with cols[i % 5]:
+                st.text(names[i])
+                st.image(posters[i])
 
 
+else:
+    selected = st.selectbox("Select a TV Show", tv_shows['title'].values)
 
+    if st.button("Recommend TV Shows"):
+        names, posters = recommend(
+            selected, tv_shows, tv_similarity, "TV", n=10
+        )
 
-
+        cols = st.columns(5)
+        for i in range(len(names)):
+            with cols[i % 5]:
+                st.text(names[i])
+                st.image(posters[i])
