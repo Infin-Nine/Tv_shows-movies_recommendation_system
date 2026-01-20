@@ -1,16 +1,19 @@
-# movie_recommendation_system
+# # 🎬 Movie & TV Show Recommendation System
 
-A **Content-Based Movie Recommendation System** built using **Python, Machine Learning, and Streamlit**.  
-This app recommends movies similar to the one selected by the user based on **text similarity**.
+A **Content-Based Movie and TV Show Recommendation System** built using **Python, Machine Learning, and Streamlit**.  
+The application recommends similar movies or TV shows based on user selection using **text similarity techniques**.
 
 ---
 
-## 📌 What does this project do?
+## ✨ Features
 
-- Takes a movie name as input
-- Finds movies **similar in content**
-- Recommends **top 5 similar movies**
-- Runs as a **web application using Streamlit**
+- 🎬 Movie Recommendations
+- 📺 TV Show Recommendations
+- Single unified Streamlit application
+- Content-based filtering using similarity scores
+- Movie & TV show posters fetched using **TMDB API**
+- Clean and interactive UI
+
 
 ---
 ## ⚠️ TMDB API Access Notice (Important)
